@@ -1,4 +1,0 @@
--cp src
--main Host
--cpp bin
--D scriptable
