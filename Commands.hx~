@@ -1,0 +1,9 @@
+
+class Commands {
+
+  function load(manager:Dynamic){
+	manager.addCommand("exttest", function(ctx){
+		ctx.send(`You said ${ctx.argsRaw}.`);
+	  })
+  }
+}

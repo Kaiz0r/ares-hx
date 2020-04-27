@@ -1,0 +1,4 @@
+-p ./
+-main Host
+-cpp bin
+-D scriptable

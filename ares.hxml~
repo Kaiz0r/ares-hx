@@ -1,0 +1,6 @@
+-p ./
+-p ../mscript
+--main Ares
+--library Haxicord
+--neko ares.n
+-D haxeJson

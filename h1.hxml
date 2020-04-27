@@ -1,0 +1,4 @@
+-p ./
+-main Ares
+-cppia bin/script.cppia
+--library Haxicord
