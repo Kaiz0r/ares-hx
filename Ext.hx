@@ -22,3 +22,4 @@ class BaseExtensions {
 	return (cl.indexOf(marker) != -1);
   }
 }
+

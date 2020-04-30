@@ -1,163 +1,27 @@
 package;
 import com.raidandfade.haxicord.DiscordClient;
-import com.raidandfade.haxicord.types.Message;
-import com.raidandfade.haxicord.types.User;
-import com.raidandfade.haxicord.types.GuildMember;
-import com.raidandfade.haxicord.types.TextChannel;
-import com.raidandfade.haxicord.types.MessageChannel;
-import com.raidandfade.haxicord.types.Guild;
+//import com.raidandfade.haxicord.types.Message;
+//import com.raidandfade.haxicord.types.User;
+//import com.raidandfade.haxicord.types.GuildMember;
+import com.raidandfade.haxicord.types.*;
+//import com.raidandfade.haxicord.types.MessageChannel;
+//import com.raidandfade.haxicord.types.Guild;
 import com.raidandfade.haxicord.types.structs.Embed;
 //import com.raidandfade.haxicord.types.structs.EmbedAuthor;
 import haxe.Json;
-import haxe.Serializer;
-import haxe.Unserializer;
+//import haxe.Exception;
+import com.raidandfade.haxicord.utils.DPERMS;
 import MScript;
+import Utils;
+import hscript.Parser;
+import hscript.Expr;
+import hscript.Interp;
+import Console;
 using StringTools;
 using Ext;
 
-class EmbedBuilder {
-  public var data:Embed;
-
-  public function new(?data:Embed){
-	if (data != null){this.data = data;}else{this.data = {};}
-  }
-  
-  public function addField(title:String, value:String, _inline:Bool = false):EmbedBuilder {
-	if(this.data.fields == null) {this.data.fields = new Array<EmbedField>();}
-	var field = {name: title, value: value, _inline: _inline};
-	this.data.fields.push(field);
-	
-	return this;
-  }
-  
-  public function setImage(img:String):EmbedBuilder {
-	this.data.image = {url: img};
-	return this;
-  }
-  
-  public function setThumbnail(img:String):EmbedBuilder {
-	this.data.thumbnail = {url: img};
-	return this;
-  }
-  
-  public function setTimestamp(dt:Date):EmbedBuilder {
-	this.data.timestamp = dt;
-	return this;
-  }
-  
-  public function setFooter(footer:EmbedFooter):EmbedBuilder {
-	// icon_url, text
-	this.data.footer = footer;
-	return this;
-  }
-
-  public function setProvider(provider:EmbedProvider):EmbedBuilder {
-	// name, url
-	this.data.provider = provider;
-	return this;
-  }
-  
-  public function setAuthor(author:EmbedAuthor):EmbedBuilder {
-	// icon_url, url, name
-	this.data.author = author;
-	return this;
-  }
-  
-  public function setAuthorFromUser(author:GuildMember):EmbedBuilder {
-	this.data.author = {};
-	if (author.displayName != null){this.data.author.name = author.displayName;}else{this.data.author.name = author.user.username;}
-	return this;
-  }
-
-  public function setColour(c:Int):EmbedBuilder {
-	this.data.color = c;
-	return this;
-  }
-  
-  public function setTitle(text:String):EmbedBuilder {
-	this.data.title = text;
-	return this;
-  }
-  public function setUrl(url:String):EmbedBuilder {
-	this.data.url = url;
-	return this;
-  }
-  
-  public function setDescription(text:String):EmbedBuilder {
-	this.data.description = text;
-	return this;
-  }
-
-  public function toStruct():Embed {
-	return this.data;
-  }
-}
-
-class Memory {
-  public var cache:Map<String, String>;
-  public var path:String;
-
-  public function new(path:String){
-	this.cache = new Map<String, String>();
-	this.path = path;
-	read();
-  }
-
-  public function read(){
-	var content:String = sys.io.File.getContent(this.path);
-	trace(content);
-	var unserializer = new Unserializer(content);
-	this.cache = unserializer.unserialize();
-  }
-
-  public function write(){
-	var serializer = new Serializer();
-	serializer.serialize(this.cache);
-	var content = serializer.toString();//haxe.Json.stringify(this.cache);
-	
-	sys.io.File.saveContent(this.path,content);
-  }
-
-  public function get(key:String, def:String = "null"):String{
-	if (this.cache.exists(key)) {
-	  return this.cache.get(key);
-	} else {
-	  return def;
-	}
-  }
-  
-  public function getInt(key:String, def:Int = 0):Int{
-	if (this.cache.exists(key)) {
-	  return Std.parseInt(this.cache.get(key));
-	} else {
-	  return def;
-	}
-  }
-
-  public function getFloat(key:String, def:Float = 0):Float{
-	if (this.cache.exists(key)) {
-	  return Std.parseFloat(this.cache.get(key));
-	} else {
-	  return def;
-	}
-  }
-  
-  public function set(key:String, value:String){
-	trace(key);
-	trace(value);
-	this.cache[key] = value;
-	write();
-  }
-}
-
-class KUtil {
-  
-  public function new()  {}
-
-  public function KPrint() {
-    Sys.println("Hello from Kaiser!");
-  }
-}
+import Commands;
+import Net;
 
 class Context {
   public var message:Message;
@@ -187,8 +51,14 @@ class Context {
 	this.argsRaw = this.args.join(" ");
   }
 
+  public function code(content:String, lang:String = ""){
+	this.channel.sendMessage({content: "```"+lang+"\n"+content+"\n```"});
+  }
   public function send(content:String){
 	this.channel.sendMessage({content: content});
+  }
+  public function sendEmbed(embed:Embed){
+	this.channel.sendMessage({embed: embed});
   }
 }
 
@@ -237,7 +107,26 @@ class Command {
   public function setTags(s:Array<String>){
 	this.tags = s;
 	return this;
-  }   
+  }
+  
+  public function removeTag(s:String){
+	if(!this.hasTag(s)){return this;}
+	this.tags.remove(s);
+	return this;
+  }
+  
+  public function addTag(s:String){
+	this.tags.push(s);
+	return this;
+  }
+
+  public function hasTag(s:String):Bool{
+	if(this.tags.indexOf(s) != -1){
+	  return true;
+	}
+	return false;
+  }
+
   public function setAliases(s:Array<String>){
 	this.aliases = s;
 	return this;
@@ -256,27 +145,86 @@ class CommandManager {
 	if (this.prefix == null){this.prefix = ".";}
 	gIndex["default"] = [];
 	
-	registerCommand("test", function(ctx:Context){
-		Sys.println("Test was tested.");
-		ctx.channel.sendMessage({content: "This was tested."});
-	  }).setAliases(["bork"]);
-	
   	registerCommand("echo", function(ctx:Context){
 		ctx.send(ctx.argsRaw);
+		ctx.message.react("<:gag:684503354323501116>");
 	  }).setBrief("I repeat, echo.").setUsage("[msg]");
+	
+  	registerCommand("kill", function(ctx:Context){
+		ctx.send("Goodbye.");
+		Sys.exit(0);
+	  }).setGroup("internal").setTags(["$owner"]).setAliases(['die', "shutdown", "exit", "quit"]);
+	
+  	registerCommand("eval", function(ctx:Context){
+		var script = ctx.argsRaw;
+		var parser = new hscript.Parser();
+		parser.allowTypes = true;
+
+		//try {
+		var program = parser.parseString(script);// }catch(e:Any){ctx.send(Std.string(e));}
+		
+		//try {
+		var interp = new hscript.Interp();// }catch(e:Any){ctx.send(Std.string(e));}
+		interp.variables.set("Math",Math); // share the Math class
+		interp.variables.set("ext",this);
+		interp.variables.set("ctx",ctx);
+		interp.variables.set("Sys",Sys);
+		interp.variables.set("echo",function(message:String){ctx.send(message);});
+		interp.variables.set("client",ctx.client);
+		interp.variables.set("message",ctx.message);
+		interp.variables.set("guild",ctx.guild);
+		interp.variables.set("channel",ctx.channel);
+		interp.variables.set("code",ctx.code);
+		interp.variables.set("sendEmbed",ctx.sendEmbed);
+		interp.variables.set("EmbedBuilder",Utils.EmbedBuilder.new);
+		//interp.variables.set("Embed",Embed);
+		try {
+		  var out = interp.execute(program);
+
+		  if(out != null){
+			ctx.send(out);
+		  }
+		} catch(e:Any) {
+		  //All exceptions will be caught here
+		  ctx.send("`"+Std.string(e)+"`");
+		}
+
+	  }).setBrief("Eval Haxe code.").setUsage("[msg]").setTags(["$owner"]);
 	
 	registerCommand("set", function(ctx:Context){
 		var key = ctx.args.shift();
 		var value = ctx.args.join(" ");
 		cfg.set(key, value);
 		ctx.channel.sendMessage({content: 'Will set $key to $value'});
-	  }).setGroup("admin").setBrief("Sets a config variable").setUsage("[key] [value]").setHelp("Data is cerealized after parsing in to a delicious bowl of Golden Grahams... wait, I mean serialized in to a string format.... far less delicious.");
+	  }).setGroup("admin").setUsage("[key] [value]").setHelp("Data is cerealized after parsing in to a delicious bowl of Golden Grahams... wait, I mean serialized in to a string format.... far less delicious.").addTag("$owner");
 	
   	registerCommand("get", function(ctx:Context){
 		var key = ctx.args.shift();
 		var value = cfg.get(key);
 		ctx.channel.sendMessage({content: '$key = $value'});
-	  }).setGroup("admin");
+	  }).setGroup("admin").addTag("$owner").setUsage("[key]");
+	
+	registerCommand("enable", function(ctx:Context){
+		if (this.commands.exists(ctx.args[0])){
+		  if(this.commands[ctx.args[0]].hasTag("$disabled")){
+			this.commands[ctx.args[0]].removeTag("$disabled");
+			ctx.send("Command enabled.");
+		  }else{
+			ctx.send("Command is already enabled.");
+		  }
+		}
+	  }).setGroup("admin").addTag("$owner").setUsage("[command]");
+	
+	registerCommand("disable", function(ctx:Context){
+		if (this.commands.exists(ctx.args[0])){
+		  if(!this.commands[ctx.args[0]].hasTag("$disabled")){
+			this.commands[ctx.args[0]].addTag("$disabled");
+			ctx.send("Command disabled.");
+		  }else{
+			ctx.send("Command is already disabled.");
+		  }
+		}
+	  }).setGroup("admin").addTag("$owner").setUsage("[command]");
 	
   	registerCommand("help", function(ctx:Context){
 		if(ctx.args.length != 0){
@@ -293,6 +241,8 @@ class CommandManager {
 			if(c.help != null){
 			  out = out+"\n\t"+c.help+"\n";
 			}
+
+			if(c.tags.length > 0){out = out + "\nTags: " + c.tags.join(" ");}
 			out = out+"```";
 			ctx.send(out);
 		  }else if (this.gIndex.exists(ctx.args[0])){
@@ -301,8 +251,11 @@ class CommandManager {
 
 			for (command in grp){
 			  var c = getCommand(command);
-			  out = out+"// "+c.name+"\n";
-			  if(c.brief != null){out = out+"\t\""+c.brief+"\"\n";}
+			  if(!c.hasTag("$hidden")){
+				
+				out = out+"// "+c.name+"\n";
+				if(c.brief != null){out = out+"\t\""+c.brief+"\"\n";}
+			  }
 			}
 
 			out = out+"\n```";
@@ -315,12 +268,18 @@ class CommandManager {
 		  var out:String = "```hx\n@: Ares.hx (Haxe->HashLink) "+cfg.get('version')+"\n";
 
 		  for (group in this.gIndex.keys()){
-			out = out+"\n#"+group+"\n";
+			if(group == "internal"){continue;}
+			var commands:Int = 0;
+			var cmdStr:String = "";
 			for (command in this.gIndex[group]){
-			  var c = this.getCommand(command);					
-			  out = out+"// "+c.name+"\n";
-			  if(c.brief != null){out = out+"\t\""+c.brief+"\"\n";}
+			  var c = this.getCommand(command);
+			  if(!c.hasTag("$hidden")){
+				commands = commands + 1;
+				cmdStr = cmdStr+"// "+c.name+"\n";
+				if(c.brief != null){cmdStr = cmdStr+"\t\""+c.brief+"\"\n";}
+			  }
 			}
+			if (commands > 0){	out = out+"\n#"+group+"\n";out = out+cmdStr;}
 		  }
 		
 		  out = out + "\n\n@: "+this.prefix+"help <command> for detailed information.```";
@@ -328,9 +287,10 @@ class CommandManager {
 		  ctx.send(out);
 
 		}
-	  });
+	  }).setGroup("internal").addTag("$hidden");
 
 	new OtherCommands(this);
+	new NetCommands(this);
   }
 
   public function getCommand(name:String):Command {
@@ -343,10 +303,32 @@ class CommandManager {
   }
 
   public function processCommands(client:DiscordClient, input:Message){
-	if(input.getMember() != null){
-	  Sys.println('> ${input.getMember().displayName}: ${input.content}');
-	}else{
-	  Sys.println('> ${input.author.username}: ${input.content}');
+	var name:String = "";
+	var fm:String = "";
+	
+	if(input.content != "" && input.content != null){
+	  if(input.getMember() != null){
+		if(input.getMember().displayName != null){
+		  name = input.getMember().displayName;
+		}else{
+		  name = input.author.username;
+		}
+		var c:String = Reflect.field(input.getChannel(), "name");
+		fm = '${name} <i,light_blue>(${c}.${input.getGuild().name})';
+	  }else{
+		name = input.author.username;
+		fm = '${name}';
+	  }
+
+	  if(input.getMember().user.bot){
+		Console.log('🤖 <blue>${fm}<reset>: ${input.content}');
+	  }else if(input.getMember().hasPermissions(DPERMS.ADMINISTRATOR)){
+		Console.log('🔨 <red>${fm}<reset>: ${input.content}');
+	  }else if(Checks.isModerator(input.getMember())){
+		Console.log('🛡 <red>${fm}<reset>: ${input.content}');
+	  }else{
+		Console.log('<green>${fm}<reset>: ${input.content}');
+	  }
 	}
 
 	if(input.content.startsWith(this.prefix)){
@@ -356,11 +338,25 @@ class CommandManager {
 	  newContext.commandManager = this;
 	  
 	  for (command in commands){
-		//trace(command.aliases);
-		//trace(newContext.commandName);
-		//trace(command.aliases.indexOf(newContext.commandName));
-		
 		if(command.name == newContext.commandName || command.aliases.indexOf(newContext.commandName) != -1){
+		  if(command.hasTag("$disabled")){
+			var em = new EmbedBuilder().setDescription("Command unavailable.").setColour(0xFF0000).toStruct();
+			newContext.sendEmbed(em);
+			return;
+		  }
+		  
+		  if(command.hasTag("$admin") && !input.getMember().hasPermissions(DPERMS.ADMINISTRATOR)){
+			var em = new EmbedBuilder().setDescription("You do not have the permissions for this command.").setColour(0xFF0000).toStruct();
+			newContext.sendEmbed(em);
+			return;
+		  }
+		  
+		  if(command.hasTag("$owner") && input.getMember().user.id.toString() != "206903283090980864"){
+			var em = new EmbedBuilder().setDescription("You do not have the permissions for this command.").setColour(0xFF0000).toStruct();
+			newContext.sendEmbed(em);
+			return;
+		  }
+		  
 		  newContext.command = command;
 		  command.execute(newContext);
 		  return;
@@ -371,53 +367,3 @@ class CommandManager {
   }
 }
 
-class OtherCommands {
-  public var golem:GolemParser;
-  
-  public function new(manager:Dynamic){
-	this.golem = new MScript.GolemParser();
-	
-	manager.registerCommand("embed", function(ctx:Context){
-		var embed = new EmbedBuilder().setDescription("this is a test").setAuthor({name: "Borker"}).setColour(0xFF0000).addField("field one", "is a field").addField("field two", "in theory, is also a field").setImage("https://cdn.discordapp.com/attachments/534070361155829796/687700372642332727/shut.jpg").setTimestamp(Date.now()).toStruct();
-		ctx.channel.sendMessage({embed: embed});
-		  
-	  }).setAliases(["e"]);
-	
-	manager.registerCommand("choice", function(ctx:Context){
-		var opt:Array<String> = [];
-		if(ctx.argsRaw.contains(",")){
-		  opt = ctx.argsRaw.split(",");
-		}else if(ctx.argsRaw.contains("|")){
-		  opt = ctx.argsRaw.split("|");
-		}
-		ctx.send(opt.choice());
-	  }).setAliases(["choose"]);
-	
-	manager.registerCommand("random", function(ctx:Context){
-		var limit = 100;
-		if (ctx.args.length > 0){limit = ctx.args[0].toInt();}
-		ctx.send('(0 - $limit) -> ${Std.random(limit)}');
-	  }).setAliases(["rand", "roll"]);
-	
-
-	manager.registerCommand("golem", function(ctx:Context){
-		this.golem.registerFn("discord", function(message){
-			ctx.send(message);
-		  });
-		
-		this.golem.registerFn("restart", function(message){
-			this.golem.output("Restarting object...");
-			var out = this.golem.buffer;
-			this.golem = new MScript.GolemParser();
-			this.golem.buffer = out;
-		  });
-		
-	this.golem.parse(ctx.argsRaw);  
-		if (this.golem.buffer.length > 0) {
-		  ctx.send(this.golem.buffer.join("\n"));this.golem.buffer = [];
-		}
-		
-	  }).setAliases(["g"]);
-	
-  }
-}

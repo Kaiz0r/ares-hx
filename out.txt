@@ -1,0 +1,46 @@
+HTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+Server: nginx/1.10.3
+Date: Wed, 29 Apr 2020 11:33:05 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+
+https://a.uguu.se/RgBLO2aqSqYY_wolfram.gifHTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+Server: nginx/1.10.3
+Date: Wed, 29 Apr 2020 11:42:31 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+
+https://a.uguu.se/dO3pQDv8yrEa_wolfram.gifHTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+Server: nginx/1.10.3
+Date: Wed, 29 Apr 2020 11:43:16 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+
+https://a.uguu.se/3djND7edMiIK_wolfram.gifHTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+Server: nginx/1.10.3
+Date: Wed, 29 Apr 2020 16:46:11 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+
+https://a.uguu.se/2N1HauED5zBg_wolfram.gifHTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+Server: nginx/1.10.3
+Date: Wed, 29 Apr 2020 16:46:54 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+
+https://a.uguu.se/Hok0EF3Xz3uS_wolfram.gif

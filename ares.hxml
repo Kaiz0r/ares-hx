@@ -1,6 +1,8 @@
 -p ./
 -p ../mscript
 --main Ares
---library Haxicord
+-lib Haxicord
+-lib console.hx
+-lib hscript
 --hl ares.hl
 -D haxeJson

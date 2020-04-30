@@ -9,7 +9,6 @@ import Kaiser;
 
 class Ares {
   static var client:DiscordClient;
-  static var kaiser:KUtil;
   static var cmd:CommandManager;
   
   static function main() {
@@ -24,6 +23,8 @@ class Ares {
   }
   
   public static function onMessage(msg:Message){
-	Sys.println(msg.content);
+	if(msg.content != "" && msg.content != null){
+	  Sys.println('${msg.content}');
+	}
   }
 }
